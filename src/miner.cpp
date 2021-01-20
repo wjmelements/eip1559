@@ -12,7 +12,10 @@ void initMiners(uint8_t count) {
     minerCount = count;
 }
 
-vector<tx_t> sorted_txs[NUM_STRATEGIES];
+
+// Because block producer strategies may disregard certain blocks
+// different block producer strategies have different pending transaction pools and heads
+vector<tx_t> sorted_txs[NUM_STRATEGIES];  // sorted least to greatest
 const block_t *head[NUM_STRATEGIES];
 
 
@@ -27,7 +30,7 @@ void mergeSortTxs(vector<tx_t> &txs, uint64_t baseFee, uint64_t beginInclusive, 
     for (uint64_t i = beginInclusive; i < endExclusive && split < endExclusive; i++) {
         uint64_t bribe0 = effectiveBribe(&txs[i], baseFee);
         uint64_t bribe1 = effectiveBribe(&txs[split], baseFee);
-        if (bribe0 >= bribe1) {
+        if (bribe0 < bribe1) {
             continue;
         }
         // shift
@@ -45,7 +48,6 @@ void insertTx(vector<tx_t> &txs, const block_t *parent, tx_t tx) {
     uint64_t baseFee = nextBaseFee(parent);
     uint64_t index = txs.size();
     txs.push_back(tx);
-    mergeSortTxs(txs, baseFee, 0, txs.size());
 }
 
 void submitTransaction(tx_t tx) {
@@ -53,9 +55,25 @@ void submitTransaction(tx_t tx) {
         insertTx(sorted_txs[strategy], head[strategy], tx);
     }
 }
-vector<tx_t> *popTransactions(uint64_t gasLimit, uint64_t baseFee) {
-    return new vector<tx_t>; // TODO
+vector<tx_t> *popTransactions(strategy_t strategy, uint64_t gasLimit, uint64_t baseFee) {
+    mergeSortTxs(sorted_txs[strategy], baseFee, 0, sorted_txs[strategy].size());
+    uint64_t gasUsed = 0;
+    vector<tx_t> *txs = new vector<tx_t>;
+    do {
+        auto tx = sorted_txs[strategy].crbegin();
+        if (tx == sorted_txs[strategy].crend()) {
+            return txs;
+        }
+        uint64_t gas = tx->gas;
+        if (gas + gasUsed > gasLimit) {
+            return txs;
+        }
+        gasUsed += gas;
+        txs->push_back(*tx);
+        sorted_txs[strategy].pop_back();
+    } while(true);
 }
+
 void onBlock(const block_t *block) {
 
 }
@@ -74,10 +92,10 @@ block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t difficu
     }
     switch (miner->strategy) {
         case FILL_BLOCK:
-            txs = popTransactions(parentGasTarget * ELASTICITY_MULTIPLIER, baseFee);
+            txs = popTransactions(miner->strategy, parentGasTarget * ELASTICITY_MULTIPLIER, baseFee);
         break;
         case MIN_BASEFEE:
-            txs = popTransactions(parentGasTarget, baseFee);
+            txs = popTransactions(miner->strategy, parentGasTarget, baseFee);
         break;
         default:
             assert(miner->strategy < NUM_STRATEGIES);

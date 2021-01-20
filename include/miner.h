@@ -9,13 +9,13 @@ typedef enum strategy {
     MIN_BASEFEE,
     // MIN_BASEFEE_ONE_DEEP,
     // MIN_BASEFEE_PERIOD,
+    NUM_STRATEGIES,
 } strategy_t;
 
 
 typedef struct miner {
     uint64_t hashrate;
     strategy_t strategy;
-    const block_t *head;
 } miner_t;
 
 extern miner_t *miners;

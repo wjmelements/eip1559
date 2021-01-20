@@ -12,8 +12,46 @@ void initMiners(uint8_t count) {
     minerCount = count;
 }
 
-void submitTransaction(tx_t tx) {
+vector<tx_t> sorted_txs[NUM_STRATEGIES];
+const block_t *head[NUM_STRATEGIES];
 
+
+void mergeSortTxs(vector<tx_t> &txs, uint64_t baseFee, uint64_t beginInclusive, uint64_t endExclusive) {
+    if (endExclusive - beginInclusive < 2) {
+        return;
+    }
+    uint64_t split = (beginInclusive + endExclusive) / 2;
+    mergeSortTxs(txs, baseFee, beginInclusive, split);
+    mergeSortTxs(txs, baseFee, split, endExclusive);
+    // inline merge
+    for (uint64_t i = beginInclusive; i < endExclusive && split < endExclusive; i++) {
+        uint64_t bribe0 = effectiveBribe(&txs[i], baseFee);
+        uint64_t bribe1 = effectiveBribe(&txs[split], baseFee);
+        if (bribe0 >= bribe1) {
+            continue;
+        }
+        // shift
+        tx_t least = txs[split];
+        for (uint64_t j = split + 1; --j > i;) {
+            txs[j] = txs[j - 1];
+        }
+        
+        txs[i] = least;
+        split++;
+    }
+}
+
+void insertTx(vector<tx_t> &txs, const block_t *parent, tx_t tx) {
+    uint64_t baseFee = nextBaseFee(parent);
+    uint64_t index = txs.size();
+    txs.push_back(tx);
+    mergeSortTxs(txs, baseFee, 0, txs.size());
+}
+
+void submitTransaction(tx_t tx) {
+    for (uint8_t strategy = 0; strategy < NUM_STRATEGIES; strategy++) {
+        insertTx(sorted_txs[strategy], head[strategy], tx);
+    }
 }
 vector<tx_t> *popTransactions(uint64_t gasLimit, uint64_t baseFee) {
     return new vector<tx_t>; // TODO
@@ -41,6 +79,8 @@ block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t difficu
         case MIN_BASEFEE:
             txs = popTransactions(parentGasTarget, baseFee);
         break;
+        default:
+            assert(miner->strategy < NUM_STRATEGIES);
     }
     block_t *block = mallocBlock(txs->size());
     block->parent = parent;

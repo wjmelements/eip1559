@@ -4,7 +4,7 @@ static uint64_t totalHashrate;
 static uint64_t now;
 
 
-void reconfig(uint64_t startTime, uint16_t numMiners, uint64_t relativeHashrates[NUM_STRATEGIES]) {
+void reconfig(uint64_t startTime, uint16_t numMiners, uint64_t relativeHashrates[NUM_STRATEGIES], uint64_t transactorDistribution[NUM_PATTERNS]) {
     now = startTime;
     totalHashrate = 0;
     initMiners(numMiners);
@@ -79,6 +79,6 @@ void printSummary() {
         totalByStrategy[miners[i].strategy] += minerRewards[i];
     }
     for (uint8_t i = 0 ; i < NUM_STRATEGIES; i++) {
-        printf("%s:%llu\n", strategyToName((strategy_t)i), totalByStrategy[i]);
+        printf("%s\t:%20llu\n", strategyToName((strategy_t)i), totalByStrategy[i]);
     }
 }

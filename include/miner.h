@@ -4,6 +4,7 @@
 using std::vector;
 
 
+static const uint64_t BLOCK_REWARD = 2000000000000;
 
 typedef enum strategy {
     FILL_BLOCK,

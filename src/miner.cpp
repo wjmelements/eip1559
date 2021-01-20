@@ -8,6 +8,7 @@ uint16_t minerCount;
 vector<tx_t> sortedTxs[NUM_STRATEGIES];  // sorted least to greatest, on-demand
 const block_t *heads[NUM_STRATEGIES];
 
+
 void initMiners(uint16_t count) {
     if (miners != NULL) {
         free(miners);
@@ -97,7 +98,7 @@ void onBlock(const block_t *block) {
     miner_t *producer = miners + block->miner;
     printf("%s\t%3u\t%6llu\t@\t%6llu\n", strategyToName(producer->strategy), block->miner, block->height, block->timestamp);
     strategy_t producerStrategy = producer->strategy;
-    printf("[%p %p] %p\n", heads[0], heads[1], block);
+    //printf("[%p %p] %p\n", heads[0], heads[1], block);
     assert(heads[producerStrategy] == block);
     for (uint8_t strategy = 0; strategy < NUM_STRATEGIES; strategy++) {
         if (strategy == producerStrategy) {
@@ -161,7 +162,7 @@ block_t *mineBlock(const miner_t *miner, uint64_t timestamp, uint64_t difficulty
     block->miner = miner - miners;
 
     block->gasUsed = 0;
-    block->totalFees = 0;
+    block->totalFees = BLOCK_REWARD; 
     for (uint64_t i = 0; i < block->txCount; i++) {
         tx_t tx = (*txs)[i];
         block->txs[i] = tx;

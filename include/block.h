@@ -5,6 +5,7 @@
 
 typedef struct block {
     const struct block *parent;
+    uint64_t height;
     uint64_t timestamp;
     uint64_t txCount;
     uint64_t td;
@@ -13,7 +14,7 @@ typedef struct block {
     uint64_t gasUsed;
     uint64_t baseFee;
     uint64_t totalFees;
-    uint8_t miner;
+    uint16_t miner;
     tx_t txs[0];
 } block_t;
 

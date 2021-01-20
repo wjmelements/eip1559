@@ -95,7 +95,9 @@ static vector<tx_t> *popTransactions(strategy_t strategy, uint64_t gasLimit, uin
 
 void onBlock(const block_t *block) {
     miner_t *producer = miners + block->miner;
+    printf("%s\t%3u\t%6llu\t@\t%6llu\n", strategyToName(producer->strategy), block->miner, block->height, block->timestamp);
     strategy_t producerStrategy = producer->strategy;
+    printf("[%p %p] %p\n", heads[0], heads[1], block);
     assert(heads[producerStrategy] == block);
     for (uint8_t strategy = 0; strategy < NUM_STRATEGIES; strategy++) {
         if (strategy == producerStrategy) {
@@ -108,7 +110,7 @@ void onBlock(const block_t *block) {
                 }
                 // fallthrough
             case FILL_BLOCK:
-                if (block->td <= heads[strategy]->td) {
+                if (heads[strategy] != NULL && block->td <= heads[strategy]->td) {
                     continue;
                 }
             break;
@@ -147,8 +149,10 @@ block_t *mineBlock(const miner_t *miner, uint64_t timestamp, uint64_t difficulty
     block->parent = parent;
     if (parent == NULL) {
         block->td = difficulty;
+        block->height = 0;
     } else {
         block->td = parent->td + difficulty;
+        block->height = parent->height + 1;
     }
     block->timestamp = timestamp;
     block->difficulty = difficulty;

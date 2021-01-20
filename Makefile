@@ -8,7 +8,7 @@ CXXFLAGS=$(filter-out $(CCSTD), $(CFLAGS)) $(CXXSTD) -fno-exceptions -Wno-write-
 OCFLAGS=$(filter-out $(CCSTD), $(CFLAGS)) -fmodules
 MKDIRS=lib bin tst/bin .pass .pass/tst/bin .make .make/bin .make/tst/bin .make/lib
 INCLUDE=$(addprefix -I,include)
-EXECS=$(addprefix bin/,main)
+EXECS=$(addprefix bin/,eip1559sim)
 TESTS=$(addprefix tst/bin/,miner)
 SRC=$(wildcard src/*.cpp) $(wildcard src/*.m)
 LIBS=$(patsubst src/%.cpp, lib/%.o, $(wildcard src/*.cpp)) $(patsubst src/%.m, lib/%.o, $(wildcard src/*.m))
@@ -23,16 +23,16 @@ clean:
 again: clean all
 check: $(addprefix .pass/,$(TESTS))
 
-FNM=\([-+a-z_A-Z/]*\)
+FNM=\([-+a-z_A-Z0-9/]*\)
 .make/%.d: %.m
 	@mkdir -p $(@D)
-	@$(CC) -MM $(CCSTD) $(INCLUDE) $< -o $@
+	@$(CC) -MM $(CCSTD) $(INCLUDE) $< | tr -d '\\\n' > $@
 .make/%.d: %.c
 	@mkdir -p $(@D)
-	@$(CC) -MM $(CCSTD) $(INCLUDE) $< -o $@
+	@$(CC) -MM $(CCSTD) $(INCLUDE) $< | tr -d '\\\n' > $@
 .make/%.d: %.cpp
 	@mkdir -p $(@D)
-	$(CPP) -MM $(CXXSTD) $(INCLUDE) $< -o $@
+	@$(CPP) -MM $(CXXSTD) $(INCLUDE) $< | tr -d '\\\n' > $@
 .make/lib/%.o.d: .make/src/%.d | .make/lib
 	@sed 's/$(FNM)\.o/lib\/\1.o/g' $< > $@
 .make/bin/%.d: .make/%.d | .make/bin

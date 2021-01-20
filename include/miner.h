@@ -4,6 +4,7 @@
 using std::vector;
 
 
+
 typedef enum strategy {
     FILL_BLOCK,
     MIN_BASEFEE,
@@ -12,6 +13,18 @@ typedef enum strategy {
     NUM_STRATEGIES,
 } strategy_t;
 
+static inline const char *strategyToName(strategy_t strategy) {
+    switch (strategy) {
+        case FILL_BLOCK:
+            return "FILL_BLOCK";
+        case MIN_BASEFEE:
+            return "MIN_BASEFEE";
+        default:
+            assert(strategy < NUM_STRATEGIES);
+            return "ERROR";
+    }
+}
+
 
 typedef struct miner {
     uint64_t hashrate;
@@ -19,9 +32,10 @@ typedef struct miner {
 } miner_t;
 
 extern miner_t *miners;
-extern uint8_t minerCount;
-void initMiners(uint8_t count);
-block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t timestamp, uint64_t difficulty);
+extern uint16_t minerCount;
+void initMiners(uint16_t count);
+block_t *mineBlock(const miner_t *miner, uint64_t timestamp, uint64_t difficulty);
+const block_t *longestChain();
 uint64_t *totalMinerRewards(const block_t *head);
 
 void onBlock(const block_t *block);

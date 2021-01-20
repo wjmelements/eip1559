@@ -2,21 +2,40 @@
 
 
 miner_t *miners;
-uint8_t minerCount;
+uint16_t minerCount;
+// Because block producer strategies may disregard certain blocks
+// different block producer strategies have different pending transaction pools and heads
+vector<tx_t> sortedTxs[NUM_STRATEGIES];  // sorted least to greatest, on-demand
+const block_t *heads[NUM_STRATEGIES];
 
-void initMiners(uint8_t count) {
+void initMiners(uint16_t count) {
     if (miners != NULL) {
         free(miners);
     }
     miners = (miner_t *)calloc(count, sizeof(miner_t));
     minerCount = count;
+    for (uint8_t i = 0; i < NUM_STRATEGIES; i++) {
+        heads[i] = NULL;
+        sortedTxs[i].clear();
+    }
 }
 
 
-// Because block producer strategies may disregard certain blocks
-// different block producer strategies have different pending transaction pools and heads
-vector<tx_t> sortedTxs[NUM_STRATEGIES];  // sorted least to greatest, on-demand
-const block_t *heads[NUM_STRATEGIES];
+const block *longestChain() {
+    uint64_t bestTd = 0;
+    const block *bestBlock = NULL;
+    for (uint8_t i = 0; i < NUM_STRATEGIES; i++) {
+        if (heads[i] == NULL) {
+            continue;
+        }
+        if (heads[i]->td <= bestTd) {
+            continue;
+        }
+        bestBlock = heads[i];
+        bestTd = bestBlock->td;
+    }
+    return bestBlock;
+}
 
 
 void mergeSortTxs(vector<tx_t> &txs, uint64_t baseFee, uint64_t beginInclusive, uint64_t endExclusive) {
@@ -101,8 +120,9 @@ void onBlock(const block_t *block) {
     }
 }
 
-block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t timestamp, uint64_t difficulty) {
+block_t *mineBlock(const miner_t *miner, uint64_t timestamp, uint64_t difficulty) {
     vector<tx_t> *txs;
+    const block_t *parent = heads[miner->strategy];
 
     uint64_t baseFee;
     uint64_t parentGasTarget;
@@ -144,6 +164,7 @@ block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t timesta
         block->gasUsed += tx.gas;
         block->totalFees += tx.gas * effectiveBribe(&tx, baseFee);
     }
+    heads[miner->strategy] = block;
     return block;
 }
 

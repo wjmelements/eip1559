@@ -5,11 +5,11 @@
 
 void test_miner_index() {
     initMiners(3);
-    block_t *block0 = mineBlock(&miners[1], NULL, 1);
+    block_t *block0 = mineBlock(&miners[1], NULL, 1, 1);
     assert(block0->miner == 1);
     assert(block0->parent == NULL);
     assert(block0->difficulty == 1);
-    block_t *block1 = mineBlock(&miners[2], block0, 2);
+    block_t *block1 = mineBlock(&miners[2], block0, 17, 2);
     assert(block1->parent == block0);
     assert(block1->miner == 2);
     assert(block1->difficulty == 2);
@@ -62,11 +62,11 @@ void test_mineBlock() {
     }
     miners[0].strategy = FILL_BLOCK;
     miners[1].strategy = MIN_BASEFEE;
-    block_t *genesis = mineBlock(&miners[0], NULL, 1000);
+    block_t *genesis = mineBlock(&miners[0], NULL, 300, 1000);
     assert(genesis != NULL);
     assert(genesis->txCount > 1);
     validateBlock(genesis);
-    block_t *child = mineBlock(&miners[1], genesis, 1000);
+    block_t *child = mineBlock(&miners[1], genesis, 301, 1000);
     assert(child != NULL);
     assert(child->txCount < 2);
     validateBlock(child);

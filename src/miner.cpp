@@ -44,7 +44,7 @@ void mergeSortTxs(vector<tx_t> &txs, uint64_t baseFee, uint64_t beginInclusive, 
     }
 }
 
-void insertTx(vector<tx_t> &txs, const block_t *parent, tx_t tx) {
+static void insertTx(vector<tx_t> &txs, const block_t *parent, tx_t tx) {
     uint64_t index = txs.size();
     txs.push_back(tx);
 }
@@ -54,7 +54,8 @@ void submitTransaction(tx_t tx) {
         insertTx(sortedTxs[strategy], heads[strategy], tx);
     }
 }
-vector<tx_t> *popTransactions(strategy_t strategy, uint64_t gasLimit, uint64_t baseFee) {
+
+static vector<tx_t> *popTransactions(strategy_t strategy, uint64_t gasLimit, uint64_t baseFee) {
     mergeSortTxs(sortedTxs[strategy], baseFee, 0, sortedTxs[strategy].size());
     uint64_t gasUsed = 0;
     vector<tx_t> *txs = new vector<tx_t>;
@@ -100,7 +101,7 @@ void onBlock(const block_t *block) {
     }
 }
 
-block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t difficulty) {
+block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t timestamp, uint64_t difficulty) {
     vector<tx_t> *txs;
 
     uint64_t baseFee;
@@ -129,6 +130,7 @@ block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t difficu
     } else {
         block->td = parent->td + difficulty;
     }
+    block->timestamp = timestamp;
     block->difficulty = difficulty;
     block->gasTarget = parentGasTarget;  // TODO test gas target changing strategies
     block->baseFee = baseFee;

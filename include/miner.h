@@ -21,9 +21,8 @@ typedef struct miner {
 extern miner_t *miners;
 extern uint8_t minerCount;
 void initMiners(uint8_t count);
-block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t difficulty);
+block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t timestamp, uint64_t difficulty);
 uint64_t *totalMinerRewards(const block_t *head);
 
 void onBlock(const block_t *block);
 void submitTransaction(tx_t tx);
-vector<tx_t> *popTransactions(uint64_t gasLimit, uint64_t baseFee);

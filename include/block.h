@@ -5,6 +5,7 @@
 
 typedef struct block {
     const struct block *parent;
+    uint64_t timestamp;
     uint64_t txCount;
     uint64_t td;
     uint64_t difficulty;
@@ -52,5 +53,6 @@ static inline void validateBlock(const block_t *block) {
     assert(block->gasTarget <= parent->gasTarget * 1025 / 1024);
     assert(block->gasTarget >= parent->gasTarget * 1023 / 1024);
     assert(block->baseFee == nextBaseFee(parent));
+    assert(block->timestamp > parent->timestamp);
     // TODO validate transactions
 }

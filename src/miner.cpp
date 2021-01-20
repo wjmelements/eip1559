@@ -15,8 +15,8 @@ void initMiners(uint8_t count) {
 
 // Because block producer strategies may disregard certain blocks
 // different block producer strategies have different pending transaction pools and heads
-vector<tx_t> sorted_txs[NUM_STRATEGIES];  // sorted least to greatest
-const block_t *head[NUM_STRATEGIES];
+vector<tx_t> sortedTxs[NUM_STRATEGIES];  // sorted least to greatest, on-demand
+const block_t *heads[NUM_STRATEGIES];
 
 
 void mergeSortTxs(vector<tx_t> &txs, uint64_t baseFee, uint64_t beginInclusive, uint64_t endExclusive) {
@@ -45,23 +45,22 @@ void mergeSortTxs(vector<tx_t> &txs, uint64_t baseFee, uint64_t beginInclusive, 
 }
 
 void insertTx(vector<tx_t> &txs, const block_t *parent, tx_t tx) {
-    uint64_t baseFee = nextBaseFee(parent);
     uint64_t index = txs.size();
     txs.push_back(tx);
 }
 
 void submitTransaction(tx_t tx) {
     for (uint8_t strategy = 0; strategy < NUM_STRATEGIES; strategy++) {
-        insertTx(sorted_txs[strategy], head[strategy], tx);
+        insertTx(sortedTxs[strategy], heads[strategy], tx);
     }
 }
 vector<tx_t> *popTransactions(strategy_t strategy, uint64_t gasLimit, uint64_t baseFee) {
-    mergeSortTxs(sorted_txs[strategy], baseFee, 0, sorted_txs[strategy].size());
+    mergeSortTxs(sortedTxs[strategy], baseFee, 0, sortedTxs[strategy].size());
     uint64_t gasUsed = 0;
     vector<tx_t> *txs = new vector<tx_t>;
     do {
-        auto tx = sorted_txs[strategy].crbegin();
-        if (tx == sorted_txs[strategy].crend()) {
+        auto tx = sortedTxs[strategy].crbegin();
+        if (tx == sortedTxs[strategy].crend()) {
             return txs;
         }
         uint64_t gas = tx->gas;
@@ -70,12 +69,35 @@ vector<tx_t> *popTransactions(strategy_t strategy, uint64_t gasLimit, uint64_t b
         }
         gasUsed += gas;
         txs->push_back(*tx);
-        sorted_txs[strategy].pop_back();
+        sortedTxs[strategy].pop_back();
     } while(true);
 }
 
 void onBlock(const block_t *block) {
-
+    miner_t *producer = miners + block->miner;
+    strategy_t producerStrategy = producer->strategy;
+    assert(heads[producerStrategy] == block);
+    for (uint8_t strategy = 0; strategy < NUM_STRATEGIES; strategy++) {
+        if (strategy == producerStrategy) {
+            continue;
+        }
+        switch (strategy) {
+            case MIN_BASEFEE:
+                if (block->gasUsed > block->gasTarget) {
+                    continue;
+                }
+                // fallthrough
+            case FILL_BLOCK:
+                if (block->td <= heads[strategy]->td) {
+                    continue;
+                }
+            break;
+        }
+        // rewind to new head
+        heads[strategy] = block;
+        // copy tx pool
+        sortedTxs[strategy] = sortedTxs[producerStrategy];
+    }
 }
 
 block_t *mineBlock(const miner_t *miner, const block_t *parent, uint64_t difficulty) {

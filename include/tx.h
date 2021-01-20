@@ -7,7 +7,7 @@ typedef struct tx {
 } tx_t;
 
 
-static inline uint64_t effectiveBribe(tx_t *tx, uint64_t baseFee) {
+static inline uint64_t effectiveBribe(const tx_t *tx, uint64_t baseFee) {
     if (tx->cap > baseFee) {
         return 0;
     }
@@ -18,6 +18,6 @@ static inline uint64_t effectiveBribe(tx_t *tx, uint64_t baseFee) {
     return bribe;
 }
 
-static inline uint64_t effectiveGasPrice(tx_t *tx, uint64_t baseFee) {
+static inline uint64_t effectiveGasPrice(const tx_t *tx, uint64_t baseFee) {
     return effectiveBribe(tx, baseFee) + baseFee;
 }

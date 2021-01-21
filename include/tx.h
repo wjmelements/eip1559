@@ -1,3 +1,6 @@
+#ifndef TX_H
+#define TX_H
+
 #include <stdint.h>
 
 typedef struct tx {
@@ -28,3 +31,6 @@ static inline uint64_t effectiveBribe(const tx_t *tx, uint64_t baseFee) {
 static inline uint64_t effectiveGasPrice(const tx_t *tx, uint64_t baseFee) {
     return effectiveBribe(tx, baseFee) + baseFee;
 }
+
+
+#endif

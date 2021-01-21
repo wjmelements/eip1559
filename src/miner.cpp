@@ -96,7 +96,7 @@ static vector<tx_t> *popTransactions(strategy_t strategy, uint64_t gasLimit, uin
 
 void onBlock(const block_t *block) {
     miner_t *producer = miners + block->miner;
-    printf("%s\t%3u\t%6llu\t@\t%6llu\n", strategyToName(producer->strategy), block->miner, block->height, block->timestamp);
+    printf("%s\t%3u\t%6llu\t@\t%6llu\t%8llu\t%8llu\t%9llu\n", strategyToName(producer->strategy), block->miner, block->height, block->timestamp, block->gasUsed, block->baseFee, block->totalFees);
     strategy_t producerStrategy = producer->strategy;
     //printf("[%p %p] %p\n", heads[0], heads[1], block);
     assert(heads[producerStrategy] == block);
@@ -107,6 +107,7 @@ void onBlock(const block_t *block) {
         switch (strategy) {
             case MIN_BASEFEE:
                 if (block->gasUsed > block->gasTarget) {
+                    printf("Ignoring because gasUsed is too high\n");
                     continue;
                 }
                 // fallthrough
@@ -153,6 +154,7 @@ block_t *mineBlock(const miner_t *miner, uint64_t timestamp, uint64_t difficulty
         block->height = 0;
     } else {
         block->td = parent->td + difficulty;
+        assert(block->td > parent->td);
         block->height = parent->height + 1;
     }
     block->timestamp = timestamp;
@@ -176,6 +178,8 @@ block_t *mineBlock(const miner_t *miner, uint64_t timestamp, uint64_t difficulty
 uint64_t *totalMinerRewards(const block_t *head) {
     uint64_t *rewards = (uint64_t *)calloc(minerCount, sizeof(uint64_t));
     while (head) {
+        assert(head->totalFees);
+        assert(rewards[head->miner] + head->totalFees > rewards[head->miner]);
         rewards[head->miner] += head->totalFees;
         head = head->parent;
     }

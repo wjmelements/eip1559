@@ -6,10 +6,10 @@ int main() {
         60, 40
     };
     uint64_t transactorModels[NUM_PATTERNS] = {
-        100,
+        100, 40, 10, 3, 2, 1,
     };
     reconfig(500, 500, minerStrategies, transactorModels);
-    run(500 + 10000000);
+    run(500 + 10000);
     printSummary();
     return 0;
 }

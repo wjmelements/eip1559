@@ -7,6 +7,7 @@ static uint64_t now;
 void reconfig(uint64_t startTime, uint16_t numMiners, uint64_t relativeHashrates[NUM_STRATEGIES], uint64_t transactorDistribution[NUM_PATTERNS]) {
     now = startTime;
     totalHashrate = 0;
+    setUserPatternDistribution(transactorDistribution);
     initMiners(numMiners);
 
     assert(numMiners >= NUM_STRATEGIES);
@@ -49,6 +50,9 @@ void reconfig(uint64_t startTime, uint16_t numMiners, uint64_t relativeHashrates
 
 static void tick() {
     now++;
+    while (arc4random() & 3) {
+        submitTransaction(nextTx());
+    }
     uint32_t chance = arc4random() % (1 << 28);
     if (chance > totalHashrate) {
         return;

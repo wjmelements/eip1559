@@ -1,5 +1,6 @@
 #include "block.h"
 
+#include <gmpxx.h>
 #include <vector>
 using std::vector;
 
@@ -37,7 +38,7 @@ extern uint16_t minerCount;
 void initMiners(uint16_t count);
 block_t *mineBlock(const miner_t *miner, uint64_t timestamp, uint64_t difficulty);
 const block_t *longestChain();
-uint64_t *totalMinerRewards(const block_t *head);
+mpz_class *totalMinerRewards(const block_t *head);
 
 void onBlock(const block_t *block);
 void submitTransaction(tx_t tx);

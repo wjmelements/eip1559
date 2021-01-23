@@ -1,5 +1,10 @@
 #include "simulator.h"
 
+
+#include <iostream>
+using std::cout;
+using std::endl;
+
 static uint64_t totalHashrate;
 static uint64_t now;
 
@@ -73,16 +78,12 @@ void run(uint64_t until) {
 }
 void printSummary() {
     const block_t *head = longestChain();
-    uint64_t *minerRewards = totalMinerRewards(head);
-    uint64_t totalByStrategy[NUM_STRATEGIES];
-    for (uint8_t i = 0 ; i < NUM_STRATEGIES; i++) {
-        totalByStrategy[i] = 0;
-    }
-    uint64_t totalMinerRewards;
+    mpz_class *minerRewards = totalMinerRewards(head);
+    mpz_class totalByStrategy[NUM_STRATEGIES];
     for (uint16_t i = 0; i < minerCount; i++) {
         totalByStrategy[miners[i].strategy] += minerRewards[i];
     }
     for (uint8_t i = 0 ; i < NUM_STRATEGIES; i++) {
-        printf("%s\t:%20llu\n", strategyToName((strategy_t)i), totalByStrategy[i]);
+        cout << strategyToName((strategy_t)i) << ":\t" << totalByStrategy[i] << endl;
     }
 }

@@ -1,5 +1,8 @@
 #include "miner.h"
 
+#include <string>
+using std::to_string;
+
 
 miner_t *miners;
 uint16_t minerCount;
@@ -7,7 +10,7 @@ uint16_t minerCount;
 // different block producer strategies have different pending transaction pools and heads
 vector<tx_t> sortedTxs[NUM_STRATEGIES];  // sorted least to greatest, on-demand
 const block_t *heads[NUM_STRATEGIES];
-
+static const uint64_t TXPOOL_SLOTS = 6000;
 
 void initMiners(uint16_t count) {
     if (miners != NULL) {
@@ -77,6 +80,9 @@ void submitTransaction(tx_t tx) {
 
 static vector<tx_t> *popTransactions(strategy_t strategy, uint64_t gasLimit, uint64_t baseFee) {
     mergeSortTxs(sortedTxs[strategy], baseFee, 0, sortedTxs[strategy].size());
+    if (sortedTxs[strategy].size() > TXPOOL_SLOTS) {
+        sortedTxs[strategy].resize(TXPOOL_SLOTS);
+    }
     uint64_t gasUsed = 0;
     vector<tx_t> *txs = new vector<tx_t>;
     do {
@@ -175,12 +181,12 @@ block_t *mineBlock(const miner_t *miner, uint64_t timestamp, uint64_t difficulty
     return block;
 }
 
-uint64_t *totalMinerRewards(const block_t *head) {
-    uint64_t *rewards = (uint64_t *)calloc(minerCount, sizeof(uint64_t));
+mpz_class *totalMinerRewards(const block_t *head) {
+    mpz_class *rewards = new mpz_class[minerCount];
     while (head) {
         assert(head->totalFees);
-        assert(rewards[head->miner] + head->totalFees > rewards[head->miner]);
-        rewards[head->miner] += head->totalFees;
+        mpz_class part(to_string(head->totalFees).c_str());
+        rewards[head->miner] += part;
         head = head->parent;
     }
     return rewards;

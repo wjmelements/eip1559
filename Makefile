@@ -4,7 +4,7 @@ CPP=g++
 CCSTD=-std=gnu11
 CXXSTD=-std=gnu++11
 CFLAGS=-O3 -fdiagnostics-color=auto -pthread -g $(CCSTD)
-CXXFLAGS=$(filter-out $(CCSTD), $(CFLAGS)) $(CXXSTD) -fno-exceptions -Wno-write-strings -Wno-pointer-arith
+CXXFLAGS=$(filter-out $(CCSTD), $(CFLAGS)) $(CXXSTD) -Wno-write-strings -Wno-pointer-arith
 OCFLAGS=$(filter-out $(CCSTD), $(CFLAGS)) -fmodules
 MKDIRS=lib bin tst/bin .pass .pass/tst/bin .make .make/bin .make/tst/bin .make/lib
 INCLUDE=$(addprefix -I,include)
@@ -12,6 +12,7 @@ EXECS=$(addprefix bin/,eip1559sim)
 TESTS=$(addprefix tst/bin/,miner)
 SRC=$(wildcard src/*.cpp) $(wildcard src/*.m)
 LIBS=$(patsubst src/%.cpp, lib/%.o, $(wildcard src/*.cpp)) $(patsubst src/%.m, lib/%.o, $(wildcard src/*.m))
+LINK=$(addprefix -l, gmp gmpxx)
 
 
 .PHONY: default all clean again check distcheck dist-check
@@ -59,9 +60,9 @@ $(MKDIRS):
 	@mkdir -p $@
 $(EXECS): | bin
 bin/%: %.cpp
-	$(CPP) $(CXXFLAGS) $(INCLUDE) $^ -o $@
+	$(CPP) $(CXXFLAGS) $(INCLUDE) $^ $(LINK) -o $@
 bin/%: %.c
-	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@
+	$(CC) $(CFLAGS) $(INCLUDE) $^ $(LINK) -o $@
 lib/%.o: src/%.m include/%.h | lib
 	$(CC) -c $(OCFLAGS) $(INCLUDE) $< -o $@
 lib/%.o: src/%.cpp include/%.h | lib
@@ -69,8 +70,8 @@ lib/%.o: src/%.cpp include/%.h | lib
 lib/%.o: src/%.c include/%.h | lib
 	$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 tst/bin/%: tst/%.m | tst/bin
-	$(CC) $(OCFLAGS) $(INCLUDE) $^ -o $@
+	$(CC) $(OCFLAGS) $(INCLUDE) $^ $(LINK) -o $@
 tst/bin/%: tst/%.cpp | tst/bin
-	$(CPP) $(CXXFLAGS) $(INCLUDE) $^ -o $@
+	$(CPP) $(CXXFLAGS) $(INCLUDE) $^ $(LINK) -o $@
 tst/bin/%: tst/%.c | tst/bin
-	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@
+	$(CC) $(CFLAGS) $(INCLUDE) $^ $(LINK) -o $@
